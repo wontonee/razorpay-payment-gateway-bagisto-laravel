@@ -71,11 +71,16 @@ composer require wontonee/razorpay
 php artisan vendor:publish --tag=razorpay-assets
 ```
 
-4. Navigate to the `admin panel -> Configure/Payment Methods`, where Razorpay will be visible at the end of the payment method list.
+4. Run the database migrations to create the necessary tables:
+```sh
+php artisan migrate
+```
 
-5. **Configure License**: In the Razorpay payment method settings, enter your license key obtained from step 1.
+5. Navigate to the `admin panel -> Configure/Payment Methods`, where Razorpay will be visible at the end of the payment method list.
 
-6. Now run the following commands to optimize your application:
+6. **Configure License**: In the Razorpay payment method settings, enter your license key obtained from step 1.
+
+7. Now run the following commands to optimize your application:
 ```sh
 php artisan config:cache
 php artisan optimize
@@ -90,6 +95,15 @@ php artisan optimize
   - Payment Gateway Logo for the Razorpay popup
 - **Smart Logo Fallback**: Automatically uses your site logo if no custom gateway logo is uploaded
 - **Professional UI**: Modern, elegant payment redirect page with loading animations
+
+### 🆕 Advanced Refund Management System
+- **Admin Refund Interface**: Process refunds directly from Bagisto admin panel
+- **Partial & Full Refunds**: Support for both partial and complete refund amounts
+- **Real-time Status Updates**: Instant updates after refund processing
+- **Refund History Tracking**: Complete audit trail of all refund transactions
+- **Payment Data Storage**: Comprehensive storage of payment and refund information
+- **Secure API Integration**: Direct integration with Razorpay Refund API
+- **Interactive Dashboard**: Vue.js powered modern interface for refund management
 
 ### Advanced Configuration Options
 - **Payment Method Icon**: Upload a custom icon for the payment methods selection page (recommended: 100x50px)

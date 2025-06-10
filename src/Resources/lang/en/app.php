@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'razorpay-refund' => 'Razorpay Refund',
+    'process-razorpay-refund' => 'Process Razorpay Refund',
+    'process-refund' => 'Process Refund',
+    'processing' => 'Processing...',
+    'loading-payment-information' => 'Loading payment information...',
+    'failed-to-load-payment-information' => 'Failed to load payment information',
+    'retry' => 'Retry',
+    'payment-information' => 'Payment Information',
+    'payment-id' => 'Payment ID',
+    'total-amount' => 'Total Amount',
+    'refunded-amount' => 'Refunded Amount',
+    'available-for-refund' => 'Available for Refund',
+    'refund-amount' => 'Refund Amount',
+    'leave-empty-for-full-refund' => 'Leave empty for full refund of remaining amount',
+    'success' => 'Success',
+    'error' => 'Error',
+    'error-loading-payment-information' => 'Error loading payment information',
+    'this-payment-cannot-be-refunded' => 'This payment cannot be refunded',
+    'refund-processed-successfully' => 'Refund processed successfully',
+    'refund-id' => 'Refund ID',
+    'amount' => 'Amount',
+    'refund-failed' => 'Refund failed',    'error-processing-refund' => 'Error processing refund',
+    'refund-amount-must-be-greater-than-zero' => 'Refund amount must be greater than 0',
+    'refund-amount-cannot-exceed-refundable-amount-of' => 'Refund amount cannot exceed refundable amount of',
+];
