@@ -8,7 +8,7 @@ Razorpay is a popular payment gateway in India. This package provides strong sup
 You must take a license from the website [https://myapps.wontonee.com/login](https://myapps.wontonee.com/login), either trial or paid.
 
 - **Trial License**: Works for 7 days.
-- **Paid License**: Valid for 1 year and costs only ₹400.  
+- **Paid License**: Valid for 1 year and costs only ₹800.  
   Includes updates and support.
 
 ## How to Get a License Key
