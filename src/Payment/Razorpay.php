@@ -40,9 +40,14 @@ class Razorpay extends Payment
      */
     public function getImage()
     {
-        $url = $this->getConfigData('image');
+       $url = $this->getConfigData('image');
 
-        return $url ? Storage::url($url) : '';
-        
+        if ($url) {
+            return Storage::url($url);
+        }
+
+        // Fallback to default Razorpay logo
+        return asset('vendor/wontonee/razorpay/razor.png');
+
     }
 }

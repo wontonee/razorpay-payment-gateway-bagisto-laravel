@@ -7,7 +7,7 @@
             "Wontonee\\Razorpay\\": "src/"
         }
     },
-	"extra": {
+    "extra": {
         "laravel": {
             "providers": [
                 "Wontonee\\Razorpay\\Providers\\RazorpayServiceProvider"
@@ -19,15 +19,16 @@
         {
             "name": "Saju G",
             "email": "saju.g@wontonetech.com"
-        }
-    ],
-    "minimum-stability": "dev",
-   "require": {
-    "razorpay/razorpay": "^2.0"
-},
-"scripts": {
-        "post-autoload-dump": [
-            "@php artisan vendor:publish --tag=public --force"
+        }    ],
+    "require": {
+        "razorpay/razorpay": "^2.9"
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "@php artisan vendor:publish --tag=razorpay-assets --force"
+        ],
+        "post-update-cmd": [
+            "@php artisan vendor:publish --tag=razorpay-assets --force"
         ]
     }
 }

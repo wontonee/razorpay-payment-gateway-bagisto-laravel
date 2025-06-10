@@ -25,30 +25,26 @@ You can watch the video tutorial below to learn how to get a license key:
 
 ## Installation
 
-1. Use the command prompt to install this package:
+1. **Get a License**: Visit [https://myapps.wontonee.com](https://myapps.wontonee.com) to obtain your Razorpay payment gateway license. Trial licenses work for 7 days only.
+
+2. Use the command prompt to install this package:
 ```sh
 composer require wontonee/razorpay
 ```
 
-2. Open `config/app.php` and register the Razorpay provider:
+3. Publish the package assets:
 ```sh
-'providers' => [
-        // Razorpay provider
-        Wontonee\Razorpay\Providers\RazorpayServiceProvider::class,
-]
-```
-3. Navigate to the `admin panel -> Configure/Payment Methods`, where Razorpay will be visible at the end of the payment method list.
-
-4. Open app\Http\Middleware\VerifyCsrfToken.php and add this route to the exception list:
-```sh
-protected $except = [
-                  '/razorpaycheck',
-           ];
+php artisan vendor:publish --tag=razorpay-assets
 ```
 
-5. Now run 
+4. Navigate to the `admin panel -> Configure/Payment Methods`, where Razorpay will be visible at the end of the payment method list.
+
+5. **Configure License**: In the Razorpay payment method settings, enter your license key obtained from step 1.
+
+6. Now run the following commands to optimize your application:
 ```sh
 php artisan config:cache
+php artisan optimize
 ```
 
 ## Troubleshooting

@@ -16,6 +16,10 @@ class RazorpayServiceProvider extends ServiceProvider
 
         $this->loadRoutesFrom(__DIR__ . '/../Http/routes.php');
         $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'razorpay');
+         // Publish assets
+        $this->publishes([
+            __DIR__ . '/../Resources/assets/images' => public_path('vendor/wontonee/razorpay'),
+        ], 'razorpay-assets');
         
     }
 
