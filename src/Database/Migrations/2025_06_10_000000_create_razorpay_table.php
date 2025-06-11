@@ -10,10 +10,9 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('razorpay', function (Blueprint $table) {
+    {        Schema::create('razorpay', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('order_id');
+            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
             $table->string('razorpay_customer_id')->nullable();
             $table->string('razorpay_payment_id')->unique();
             $table->enum('payment_status', ['paid', 'refund'])->default('paid');
@@ -23,7 +22,6 @@ return new class extends Migration
             $table->decimal('refunded_amount', 12, 4)->default(0);
             $table->timestamps();
 
-            $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
             $table->index(['order_id', 'payment_status']);
         });
     }
