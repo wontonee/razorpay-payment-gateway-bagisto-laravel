@@ -15,7 +15,7 @@ You must take a license from the website [https://myapps.wontonee.com/login](htt
 
 You can watch the video tutorial below to learn how to get a license key:
 
-[![Watch the video](https://img.youtube.com/vi/E4NTZ4TyM5M/0.jpg)](https://youtu.be/E4NTZ4TyM5M?si=uIUXfeaj0ttH7VhC)
+[![Watch the video](https://img.youtube.com/vi/Xv1O4CteFs8/0.jpg)](https://www.youtube.com/watch?v=Xv1O4CteFs8)
 
 ## 🎯 Key Benefits
 
@@ -161,7 +161,7 @@ For any help or customization:
 - 🌐 **Website**: [https://www.wontonee.com](https://www.wontonee.com)
 - 📧 **Email**: [dev@wontonee.com](mailto:dev@wontonee.com)
 - 💬 **WhatsApp**: [+91 9711381236](https://wa.me/919711381236)
-- 🎥 **Video Tutorial**: [Watch License Setup Guide](https://youtu.be/E4NTZ4TyM5M?si=uIUXfeaj0ttH7VhC)
+- 🎥 **Video Tutorial**: [Watch Installation Guide](https://www.youtube.com/watch?v=Xv1O4CteFs8)
 
 ---
 
