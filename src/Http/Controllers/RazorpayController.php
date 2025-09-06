@@ -7,6 +7,7 @@ use Webkul\Sales\Repositories\OrderRepository;
 use Webkul\Sales\Repositories\RefundRepository;
 use Webkul\Sales\Transformers\OrderResource;
 use Webkul\Sales\Repositories\InvoiceRepository;
+use Webkul\Sales\Repositories\OrderCommentRepository;
 use Illuminate\Http\Request;
 use Razorpay\Api\Api;
 use Razorpay\Api\Errors\SignatureVerificationError;
@@ -30,15 +31,23 @@ class RazorpayController extends Controller
     protected $invoiceRepository;
 
     /**
+     * OrderCommentRepository $orderCommentRepository
+     *
+     * @var \Webkul\Sales\Repositories\OrderCommentRepository
+     */
+    protected $orderCommentRepository;
+
+    /**
      * Create a new controller instance.
      *
      * @param  \Webkul\Attribute\Repositories\OrderRepository  $orderRepository
      * @return void
      */
-    public function __construct(OrderRepository $orderRepository,  InvoiceRepository $invoiceRepository)
+    public function __construct(OrderRepository $orderRepository, InvoiceRepository $invoiceRepository, OrderCommentRepository $orderCommentRepository)
     {
         $this->orderRepository = $orderRepository;
         $this->invoiceRepository = $invoiceRepository;
+        $this->orderCommentRepository = $orderCommentRepository;
     }
 
     /**
@@ -70,6 +79,20 @@ class RazorpayController extends Controller
 
         // Get configurable theme color with fallback to default
         $themeColor = core()->getConfigData('sales.payment_methods.razorpay.theme_color') ?: '#F37254';
+        
+        // Check if rounding occurred and store for order comment
+        $originalAmount = $total_amount;
+        $roundedAmount = round($total_amount);
+        $roundingOccurred = $originalAmount != $roundedAmount;
+        
+        // Store rounding info in session for order creation
+        if ($roundingOccurred) {
+            session(['razorpay_rounding_info' => [
+                'original_amount' => $originalAmount,
+                'rounded_amount' => $roundedAmount,
+                'difference' => abs($originalAmount - $roundedAmount)
+            ]]);
+        }
 
         $apiData = [
             'key' => core()->getConfigData('sales.payment_methods.razorpay.key_id'),
@@ -77,7 +100,7 @@ class RazorpayController extends Controller
             'license' => core()->getConfigData('sales.payment_methods.razorpay.license_keyid'),
             'product_id' => 'RazorPayBagisto',
             'receipt' => "Receipt no. " . $cart->id,
-            'amount' => $total_amount * 100,
+            'amount' => $roundedAmount * 100,
             'currency' => 'INR',
             'name' => $billingAddress->name,
             'description' => 'RazorPay payment collection for the order - ' . $cart->id,
@@ -178,6 +201,23 @@ class RazorpayController extends Controller
             $order = $this->orderRepository->create($data);
             $this->orderRepository->update(['status' => 'processing'], $order->id);
 
+            // Add order comment if rounding occurred
+            $roundingInfo = session('razorpay_rounding_info');
+            if ($roundingInfo) {
+                $this->orderCommentRepository->create([
+                    'order_id' => $order->id,
+                    'comment' => sprintf(
+                        'Amount rounded for Razorpay payment: Original amount ₹%.2f was rounded to ₹%.0f (difference: ₹%.2f)',
+                        $roundingInfo['original_amount'],
+                        $roundingInfo['rounded_amount'],
+                        $roundingInfo['difference']
+                    ),
+                    'customer_notified' => false
+                ]);
+                // Clear the session data
+                session()->forget('razorpay_rounding_info');
+            }
+
             // Save payment data to razorpay table for refund functionality
             Razorpay::create([
                 'order_id' => $order->id,
@@ -250,6 +290,11 @@ class RazorpayController extends Controller
             // Determine refund amount (empty or 0 means full refund)
             $refundAmount = ($request->amount && $request->amount > 0) ? floatval($request->amount) : $razorpayPayment->getRefundableAmount();
 
+            // Check if rounding will occur for refund
+            $originalRefundAmount = $refundAmount;
+            $roundedRefundAmount = round($refundAmount);
+            $refundRoundingOccurred = $originalRefundAmount != $roundedRefundAmount;
+
             if ($refundAmount > $razorpayPayment->getRefundableAmount()) {
                 $errorMessage = 'Refund amount cannot exceed refundable amount of ₹' . number_format($razorpayPayment->getRefundableAmount(), 2);
                 session()->flash('error', $errorMessage);
@@ -267,7 +312,7 @@ class RazorpayController extends Controller
 
             // Create refund
             $refund = $api->payment->fetch($razorpayPayment->razorpay_payment_id)->refund([
-                'amount' => $refundAmount * 100, // Convert to paise
+                'amount' => $roundedRefundAmount * 100, // Convert to paise
                 'speed' => 'normal',
                 'notes' => [
                     'reason' => 'Admin refund for order #' . $order->id,
@@ -276,8 +321,22 @@ class RazorpayController extends Controller
                 ]
             ]);
 
+            // Add order comment if rounding occurred for refund
+            if ($refundRoundingOccurred) {
+                $this->orderCommentRepository->create([
+                    'order_id' => $order->id,
+                    'comment' => sprintf(
+                        'Refund amount rounded for Razorpay processing: Original refund amount ₹%.2f was rounded to ₹%.0f (difference: ₹%.2f)',
+                        $originalRefundAmount,
+                        $roundedRefundAmount,
+                        abs($originalRefundAmount - $roundedRefundAmount)
+                    ),
+                    'customer_notified' => false
+                ]);
+            }
+
             // Update payment record
-            $newRefundedAmount = $razorpayPayment->refunded_amount + $refundAmount;
+            $newRefundedAmount = $razorpayPayment->refunded_amount + $roundedRefundAmount;
             $razorpayPayment->update([
                 'refunded_amount' => $newRefundedAmount,
                 'payment_status' => $newRefundedAmount >= $razorpayPayment->amount ? 'refund' : 'paid',
@@ -293,12 +352,12 @@ class RazorpayController extends Controller
             }
 
             // Flash success message
-            session()->flash('success', 'Refund processed successfully! Refund ID: ' . $refund->id . '. Amount: ₹' . number_format($refundAmount, 2));
+            session()->flash('success', 'Refund processed successfully! Refund ID: ' . $refund->id . '. Amount: ₹' . number_format($roundedRefundAmount, 2));
 
             return response()->json([
                 'success' => true,
                 'message' => 'Refund processed successfully.',
-                'refund_amount' => $refundAmount,
+                'refund_amount' => $roundedRefundAmount,
                 'refund_id' => $refund->id,
                 'total_refunded' => $newRefundedAmount,
                 'remaining_amount' => $razorpayPayment->amount - $newRefundedAmount
