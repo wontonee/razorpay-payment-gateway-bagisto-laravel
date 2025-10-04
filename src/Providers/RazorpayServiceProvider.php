@@ -11,7 +11,8 @@ class RazorpayServiceProvider extends ServiceProvider
      * Bootstrap services.
      *
      * @return void
-     */    public function boot()
+     */
+    public function boot()
     {
         $this->loadRoutesFrom(__DIR__ . '/../Http/routes.php');
         $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'razorpay');
@@ -35,6 +36,34 @@ class RazorpayServiceProvider extends ServiceProvider
     public function register()
     {
         $this->registerConfig();
+        $this->registerCommands();
+        $this->registerServices();
+    }
+
+    /**
+     * Register package services.
+     *
+     * @return void
+     */
+    protected function registerServices()
+    {
+        $this->app->singleton(\Wontonee\Razorpay\Services\RazorpayFallbackService::class);
+    }
+
+    /**
+     * Register console commands.
+     *
+     * @return void
+     */
+    protected function registerCommands()
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Wontonee\Razorpay\Console\Commands\ProcessRazorpayFallback::class,
+                \Wontonee\Razorpay\Console\Commands\CreateTestPaymentAttempt::class,
+                \Wontonee\Razorpay\Console\Commands\RazorpayStatus::class,
+            ]);
+        }
     }
 
     /**

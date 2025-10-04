@@ -12,8 +12,11 @@ use Illuminate\Http\Request;
 use Razorpay\Api\Api;
 use Razorpay\Api\Errors\SignatureVerificationError;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Routing\Controller;
 use Wontonee\Razorpay\Models\Razorpay;
+use Wontonee\Razorpay\Models\RazorpayPaymentAttempt;
+use Carbon\Carbon;
 
 class RazorpayController extends Controller
 {
@@ -129,6 +132,73 @@ class RazorpayController extends Controller
 
                 $request->session()->put('razorpay_order_id', $razorpayOrderId);
 
+                // Create payment attempt record for fallback tracking
+                // Only store essential cart data to avoid large database entries
+                $cartSnapshot = [
+                    'id' => $cart->id,
+                    'customer_id' => $cart->customer_id,
+                    'customer_email' => $cart->customer_email,
+                    'customer_first_name' => $cart->customer_first_name,
+                    'customer_last_name' => $cart->customer_last_name,
+                    'is_guest' => $cart->is_guest,
+                    'channel_id' => $cart->channel_id,
+                    'channel_name' => core()->getCurrentChannel()->name,
+                    'items_count' => $cart->items_count,
+                    'items_qty' => $cart->items_qty,
+                    'cart_currency_code' => $cart->cart_currency_code,
+                    'base_currency_code' => $cart->base_currency_code,
+                    'sub_total' => $cart->sub_total,
+                    'base_sub_total' => $cart->base_sub_total,
+                    'tax_total' => $cart->tax_total,
+                    'base_tax_total' => $cart->base_tax_total,
+                    'discount_amount' => $cart->discount_amount,
+                    'base_discount_amount' => $cart->base_discount_amount,
+                    'grand_total' => $cart->grand_total,
+                    'base_grand_total' => $cart->base_grand_total,
+                    'billing_address' => $cart->billing_address ? $cart->billing_address->toArray() : null,
+                    'shipping_address' => $cart->shipping_address ? $cart->shipping_address->toArray() : null,
+                    'selected_shipping_rate' => $cart->selected_shipping_rate ? [
+                        'price' => $cart->selected_shipping_rate->price,
+                        'base_price' => $cart->selected_shipping_rate->base_price,
+                        'method' => $cart->selected_shipping_rate->method,
+                        'method_title' => $cart->selected_shipping_rate->method_title,
+                    ] : null,
+                    'payment' => $cart->payment ? $cart->payment->toArray() : ['method' => 'razorpay'],
+                    'items' => $cart->items->map(function($item) {
+                        return [
+                            'id' => $item->id,
+                            'product_id' => $item->product_id,
+                            'sku' => $item->sku,
+                            'name' => mb_substr($item->name, 0, 100), // Limit name length to prevent huge entries
+                            'price' => $item->price,
+                            'base_price' => $item->base_price,
+                            'total' => $item->total,
+                            'base_total' => $item->base_total,
+                            'quantity' => $item->quantity,
+                            'weight' => $item->weight,
+                        ];
+                    })->take(20)->toArray(), // Limit to 20 items to prevent huge data storage
+                ];
+
+                // Check cart data size before storing
+                $cartDataSize = mb_strlen(json_encode($cartSnapshot), '8bit');
+                if ($cartDataSize > 65000) { // MySQL TEXT field limit is ~65KB
+                    // Remove items array if cart data is too large
+                    unset($cartSnapshot['items']);
+                    
+                    // Add a note about truncated data
+                    $cartSnapshot['_note'] = 'Items data truncated due to size constraints';
+                }
+
+                RazorpayPaymentAttempt::create([
+                    'cart_id' => $cart->id,
+                    'razorpay_order_id' => $razorpayOrderId,
+                    'status' => 'initiated',
+                    'amount' => $roundedAmount,
+                    'cart_data' => $cartSnapshot,
+                    'initiated_at' => Carbon::now(),
+                ]);
+
                 $displayAmount = $amount =  $apiData['amount'];
                 $data = [
                     "key"               => core()->getConfigData('sales.payment_methods.razorpay.key_id'),
@@ -154,7 +224,15 @@ class RazorpayController extends Controller
 
                 $json = json_encode($data);
 
-                return view('razorpay::razorpay-redirect')->with(compact('data', 'json'));
+                // Get checkout type from config (default: standard)
+                $checkoutType = core()->getConfigData('sales.payment_methods.razorpay.checkout_type') ?? 'standard';
+                
+                // Select view based on checkout type
+                $viewName = ($checkoutType === 'js') 
+                    ? 'razorpay::razorpay-redirect' 
+                    : 'razorpay::razorpay-redirect-standard';
+
+                return view($viewName)->with(compact('data', 'json'));
             } else {
                 session()->flash('error', $responseData['error']);
                 return redirect()->route('shop.checkout.cart.index');
@@ -170,12 +248,56 @@ class RazorpayController extends Controller
      */
     public function verify(Request $request)
     {
+        // Handle both GET and POST requests for better browser compatibility
+        $paymentId = $request->input('razorpay_payment_id');
+      //  $signature = $request->input('razorpay_signature');
+        
+        // If no payment data, redirect to cart
+        if (!$paymentId) {
+            session()->flash('error', 'Payment information not received. Please try again.');
+            return redirect()->route('shop.checkout.cart.index');
+        }
+        
         $api = new Api(core()->getConfigData('sales.payment_methods.razorpay.key_id'), core()->getConfigData('sales.payment_methods.razorpay.secret'));
         
         // Razorpay customer creation
         $razorpayCustomer = null;
         // Open the cart
         $cart = Cart::getCart();
+        
+        // If cart is null or empty, try to recover from payment attempt
+        if (!$cart || !$cart->id) {
+            try {
+                $payment = $api->payment->fetch($paymentId);
+                $paymentAttempt = RazorpayPaymentAttempt::where('razorpay_order_id', $payment->order_id)
+                    ->where('status', 'initiated')
+                    ->first();
+                
+                if ($paymentAttempt && $payment->status == 'captured') {
+                    // Use fallback service to process this payment
+                    $fallbackService = app(\Wontonee\Razorpay\Services\RazorpayFallbackService::class);
+                    $result = $fallbackService->processWebhookPayment(
+                        $paymentAttempt->cart_id,
+                        $paymentId,
+                        $paymentAttempt->cart_data
+                    );
+                    
+                    if ($result['success']) {
+                        session()->flash('order_id', $result['order_id']);
+                        return redirect()->route('shop.checkout.onepage.success');
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error('Cart recovery failed in verify method', [
+                    'payment_id' => $paymentId,
+                    'error' => $e->getMessage()
+                ]);
+            }
+            
+            session()->flash('error', 'Your session has expired. Please check your orders or contact support.');
+            return redirect()->route('shop.checkout.cart.index');
+        }
+        
         try {
             
             $billingAddress = $cart->billing_address;
@@ -200,6 +322,15 @@ class RazorpayController extends Controller
             $data = (new OrderResource($cart))->jsonSerialize(); // new class v2.2
             $order = $this->orderRepository->create($data);
             $this->orderRepository->update(['status' => 'processing'], $order->id);
+
+            // Mark payment attempt as completed
+            $paymentAttempt = RazorpayPaymentAttempt::where('cart_id', $cart->id)
+                ->where('status', 'initiated')
+                ->first();
+            
+            if ($paymentAttempt) {
+                $paymentAttempt->markAsCompleted($payment->id);
+            }
 
             // Add order comment if rounding occurred
             $roundingInfo = session('razorpay_rounding_info');
@@ -229,10 +360,8 @@ class RazorpayController extends Controller
                 'refunded_amount' => 0,
             ]);
 
-            //Payorder ID of RazorPay
-            if ($order->canInvoice()) {
-                $this->invoiceRepository->create($this->prepareInvoiceData($order));
-            }
+            // Create invoice for the order
+            $this->invoiceRepository->create($this->prepareInvoiceData($order));
             Cart::deActivateCart();
             session()->flash('order_id', $order->id); // line instead of $order in v2.1
             // Order and prepare invoice
@@ -460,4 +589,184 @@ class RazorpayController extends Controller
             'refund_history' => $razorpayPayment->refund_data ?? []
         ]);
     }
+
+    /**
+     * Handle Razorpay webhook events for real-time payment processing
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function webhook(Request $request)
+    {
+        // Check if webhooks are enabled
+        if (!core()->getConfigData('sales.payment_methods.razorpay.webhook_enabled')) {
+            return response()->json(['status' => 'webhooks_disabled'], 200);
+        }
+
+        try {
+            // Get webhook secret for signature verification
+            $webhookSecret = core()->getConfigData('sales.payment_methods.razorpay.webhook_secret');
+            
+            if (!$webhookSecret) {
+                Log::warning('Razorpay webhook received but no webhook secret configured');
+                return response()->json(['status' => 'no_secret'], 200);
+            }
+
+            // Verify webhook signature
+            $webhookSignature = $request->header('X-Razorpay-Signature');
+            $webhookBody = $request->getContent();
+            
+            if (!$this->verifyWebhookSignature($webhookBody, $webhookSignature, $webhookSecret)) {
+                Log::error('Razorpay webhook signature verification failed', [
+                    'signature' => $webhookSignature,
+                    'ip' => $request->ip()
+                ]);
+                return response()->json(['status' => 'invalid_signature'], 401);
+            }
+
+            // Parse webhook payload
+            $event = $request->all();
+            
+            Log::info('Razorpay webhook received', [
+                'event' => $event['event'] ?? 'unknown',
+                'payment_id' => $event['payload']['payment']['entity']['id'] ?? null
+            ]);
+
+            // Process different event types
+            switch ($event['event']) {
+                case 'payment.captured':
+                    return $this->handlePaymentCaptured($event['payload']['payment']['entity']);
+                    
+                case 'payment.failed':
+                    return $this->handlePaymentFailed($event['payload']['payment']['entity']);
+                    
+                case 'order.paid':
+                    return $this->handleOrderPaid($event['payload']['order']['entity']);
+                    
+                default:
+                    Log::info('Razorpay webhook event not handled', ['event' => $event['event']]);
+                    return response()->json(['status' => 'event_not_handled'], 200);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Razorpay webhook processing failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json(['status' => 'error'], 500);
+        }
+    }
+
+    /**
+     * Verify webhook signature
+     */
+    protected function verifyWebhookSignature($body, $signature, $secret)
+    {
+        $expectedSignature = hash_hmac('sha256', $body, $secret);
+        return hash_equals($expectedSignature, $signature);
+    }
+
+    /**
+     * Handle payment.captured webhook event
+     */
+    protected function handlePaymentCaptured($payment)
+    {
+        try {
+            // Find payment attempt by payment ID or order ID
+            $paymentAttempt = RazorpayPaymentAttempt::where('razorpay_order_id', $payment['order_id'])
+                ->where('status', 'initiated')
+                ->first();
+
+            if (!$paymentAttempt) {
+                Log::warning('Payment attempt not found for webhook', [
+                    'payment_id' => $payment['id'],
+                    'order_id' => $payment['order_id']
+                ]);
+                return response()->json(['status' => 'payment_attempt_not_found'], 200);
+            }
+
+            // Use fallback service to process the payment
+            $fallbackService = app(\Wontonee\Razorpay\Services\RazorpayFallbackService::class);
+            
+            $result = $fallbackService->processWebhookPayment(
+                $paymentAttempt->cart_id,
+                $payment['id'],
+                $paymentAttempt->cart_data
+            );
+
+            if ($result['success']) {
+                Log::info('Webhook payment processed successfully', [
+                    'payment_id' => $payment['id'],
+                    'order_id' => $result['order_id']
+                ]);
+                
+                return response()->json(['status' => 'processed', 'order_id' => $result['order_id']], 200);
+            } else {
+                Log::error('Webhook payment processing failed', [
+                    'payment_id' => $payment['id'],
+                    'error' => $result['message']
+                ]);
+                
+                return response()->json(['status' => 'processing_failed'], 200);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Webhook payment.captured handling failed', [
+                'payment_id' => $payment['id'],
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json(['status' => 'error'], 500);
+        }
+    }
+
+    /**
+     * Handle payment.failed webhook event
+     */
+    protected function handlePaymentFailed($payment)
+    {
+        try {
+            // Find and update payment attempt status
+            $paymentAttempt = RazorpayPaymentAttempt::where('razorpay_order_id', $payment['order_id'])
+                ->where('status', 'initiated')
+                ->first();
+
+            if ($paymentAttempt) {
+                $paymentAttempt->markAsFailed($payment['id'], $payment['error_description'] ?? 'Payment failed');
+                
+                Log::info('Payment marked as failed via webhook', [
+                    'payment_id' => $payment['id'],
+                    'cart_id' => $paymentAttempt->cart_id
+                ]);
+            }
+
+            return response()->json(['status' => 'failed_recorded'], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Webhook payment.failed handling failed', [
+                'payment_id' => $payment['id'],
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json(['status' => 'error'], 500);
+        }
+    }
+
+    /**
+     * Handle order.paid webhook event
+     */
+    protected function handleOrderPaid($order)
+    {
+        // This event is fired when an order is fully paid
+        // For now, we'll just log it as payment.captured handles the main processing
+        Log::info('Order paid webhook received', [
+            'order_id' => $order['id'],
+            'amount' => $order['amount']
+        ]);
+
+        return response()->json(['status' => 'logged'], 200);
+    }
+
+
 }

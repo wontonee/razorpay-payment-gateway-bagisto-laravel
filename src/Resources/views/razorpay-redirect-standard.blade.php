@@ -151,12 +151,12 @@
             
             <!-- Payment Title -->
             <h1 class="payment-title">
-                Processing Your Payment
+                Redirecting to Payment Gateway
             </h1>
             
             <!-- Payment Subtitle -->
             <p class="payment-subtitle">
-                Please wait while we securely redirect you to Razorpay.<br>
+                Please wait while we securely redirect you to Razorpay's payment page.<br>
                 <strong>Do not close this window or refresh the page.</strong>
             </p>
             
@@ -185,40 +185,54 @@
         </div>
     </div>
 
+    <!-- Standard Checkout Form - Direct Redirect to Razorpay -->
+    <form name='razorpayform' action="https://api.razorpay.com/v1/checkout/embedded" method="POST" style="display: none;">
+        <input type="hidden" name="key_id" value="{{ $data['key'] }}">
+        <input type="hidden" name="order_id" value="{{ $data['order_id'] }}">
+        <input type="hidden" name="name" value="{{ $data['name'] }}">
+        <input type="hidden" name="description" value="{{ $data['description'] }}">
+        <input type="hidden" name="image" value="{{ $data['image'] }}">
+        <input type="hidden" name="prefill[name]" value="{{ $data['prefill']['name'] }}">
+        <input type="hidden" name="prefill[email]" value="{{ $data['prefill']['email'] }}">
+        <input type="hidden" name="prefill[contact]" value="{{ $data['prefill']['contact'] }}">
+        <input type="hidden" name="notes[address]" value="{{ $data['notes']['address'] }}">
+        <input type="hidden" name="notes[merchant_order_id]" value="{{ $data['notes']['merchant_order_id'] }}">
+        <input type="hidden" name="callback_url" value="{{ $data['callback_url'] }}">
+        <input type="hidden" name="cancel_url" value="{{ route('shop.checkout.cart.index') }}">
+    </form>
+
     @pushOnce('scripts')
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
-        var options = <?php echo $json?>;
-        
-        options.handler = function(response) {
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = "{{ route('razorpay.callback') }}";
+        // Progress animation
+        function animateProgress() {
+            const steps = document.querySelectorAll('.step');
+            let currentStep = 0;
             
-            var csrfToken = document.createElement('input');
-            csrfToken.type = 'hidden';
-            csrfToken.name = '_token';
-            csrfToken.value = '{{ csrf_token() }}';
-            form.appendChild(csrfToken);
+            const interval = setInterval(() => {
+                if (currentStep < steps.length) {
+                    steps[currentStep].classList.add('active');
+                    currentStep++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 500);
+        }
+
+        // Auto-submit form on page load (Standard Redirect Method)
+        window.onload = function() {
+            // Start progress animation
+            animateProgress();
             
-            var paymentId = document.createElement('input');
-            paymentId.type = 'hidden';
-            paymentId.name = 'razorpay_payment_id';
-            paymentId.value = response.razorpay_payment_id;
-            form.appendChild(paymentId);
-            
-            var signature = document.createElement('input');
-            signature.type = 'hidden';
-            signature.name = 'razorpay_signature';
-            signature.value = response.razorpay_signature;
-            form.appendChild(signature);
-            
-            document.body.appendChild(form);
-            form.submit();
-        };
-        
-        var rzp = new Razorpay(options);
-        rzp.open();
+            // Auto-submit form after a brief delay for UX
+            setTimeout(function() {
+                console.log('Redirecting to Razorpay payment page...');
+                document.razorpayform.submit();
+            }, 1500);
+        }
     </script>
     @endPushOnce
 </x-shop::layouts>
+
+
+
+
