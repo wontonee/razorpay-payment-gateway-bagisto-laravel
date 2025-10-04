@@ -1,21 +1,127 @@
-MIT License
+Proprietary License Agreement
+© 2021–2025 Wontonee DigitalCraft LLP (Saju Gopal Ambatt)
+All Rights Reserved.
+https://wontonee.com
 
-Copyright (c) 2021 Saju Gopal Ambatt
+SOFTWARE: Razorpay Payment Gateway for Bagisto (Laravel)
+AUTHOR: Wontonee DigitalCraft LLP
+CONTACT: dev@wontonee.com
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+---
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+### 1. Ownership and Copyright
+This software and all associated source code, assets, documentation, and
+derivative materials (collectively, the “Software”) are the exclusive
+property of **Wontonee DigitalCraft LLP**. The Software is protected under
+international copyright and intellectual property laws.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+No title or ownership of the Software is transferred to the user under
+this license. All rights not expressly granted remain reserved by
+Wontonee DigitalCraft LLP.
+
+---
+
+### 2. Grant of License
+Subject to full compliance with the terms herein, you are granted a
+limited, non-exclusive, non-transferable, revocable license to:
+
+- Install and use the Software solely for your personal or internal
+  business purposes; and
+- Modify the Software internally, provided such modifications are
+  not distributed or shared publicly.
+
+No other rights are granted, whether by implication, estoppel,
+or otherwise.
+
+---
+
+### 3. Restrictions
+
+You **MAY NOT**, under any circumstances:
+
+1. Copy, reproduce, or redistribute the Software (in whole or in part)
+   on any public or private code hosting platform (including GitHub,
+   GitLab, Bitbucket, etc.) without prior written permission.
+2. Sell, lease, rent, sublicense, or offer the Software as part of any
+   commercial product or service without express written authorization
+   from Wontonee DigitalCraft LLP.
+3. Modify the Software for the purpose of re-publication, rebranding,
+   or redistribution.
+4. Remove or alter any copyright notice, attribution, or proprietary
+   markings within the Software.
+5. Use the Software in any manner that competes directly with
+   Wontonee DigitalCraft LLP or any of its products or services.
+6. Claim ownership or authorship of the Software.
+
+Any violation of these restrictions will result in the immediate
+termination of this license and may lead to legal action.
+
+---
+
+### 4. Attribution Requirement
+Where the Software or any part thereof is used (even internally),
+the following notice must remain visible and intact in all copies,
+derivatives, or documentation:
+
+> © 2021–2025 Wontonee DigitalCraft LLP  
+> Developed by Saju Gopal Ambatt  
+> https://wontonee.com  
+
+---
+
+### 5. Distribution and Repository Posting
+
+Reposting or redistributing this Software on **any public or private
+repository, website, or file sharing platform** is **strictly prohibited**.
+
+This includes — but is not limited to — re-uploading, cloning,
+mirroring, or posting derivative or modified versions of the Software.
+
+Any such action constitutes copyright infringement under applicable
+laws and will result in immediate DMCA takedown actions and possible
+civil or criminal penalties.
+
+---
+
+### 6. Warranty Disclaimer
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE,
+AND NON-INFRINGEMENT.
+
+IN NO EVENT SHALL WONTONEE DIGITALCRAFT LLP OR ITS CONTRIBUTORS BE
+LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+---
+
+### 7. Termination
+This license is automatically terminated if you fail to comply with
+any of its terms. Upon termination, you must destroy all copies and
+derivatives of the Software in your possession.
+
+---
+
+### 8. Governing Law and Jurisdiction
+This agreement shall be governed by and construed in accordance with
+the laws of **India**, and the courts of **New Delhi** shall have exclusive
+jurisdiction over any disputes arising under this agreement.
+
+---
+
+### 9. Contact
+For commercial licensing, redistribution rights, or custom agreements,
+please contact:
+
+**Wontonee DigitalCraft LLP**  
+Email: dev@wontonee.com  
+Website: https://wontonee.com  
+Address: New Delhi, India
+
+---
+
+### 10. Acceptance
+By downloading, installing, copying, or using this Software, you
+acknowledge that you have read, understood, and agreed to be bound by
+the terms of this license.
