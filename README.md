@@ -110,6 +110,9 @@ php artisan optimize
 - **Payment Gateway Logo**: Upload a logo to display in the Razorpay payment popup
 - **Theme Color**: Choose custom colors for the payment interface (default: #F37254)
 - **Automatic Branding**: Uses your site's main logo as fallback for consistent branding
+- **Checkout**: New standard and js checkout feature
+- **Webhook**: Razorpay webhook set up
+- **Cronjob**: If a payment fails during checkout, set up a cron job to check the customer's payment status and create the order if the payment is confirmed.
 
 ### Security & Performance
 - **CSRF Protection**: Secure callback handling with proper middleware configuration
