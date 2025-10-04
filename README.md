@@ -3,6 +3,40 @@ Razorpay is a popular payment gateway in India. This package provides strong sup
 
 ---
 
+## 🚨 Official Notice – Unauthorized Copy Alert
+
+We, **Wontonee DigitalCraft LLP**, are the original developers and copyright holders of the **Laravel Razorpay Payment Gateway for Bagisto** extension — available exclusively at:
+
+👉 **https://github.com/wontonee/razorpay-payment-gateway-bagisto-laravel**
+
+It has come to our attention that a third-party repository (**https://github.com/vfixtechnology/bagisto-razorpay**) has copied and redistributed our code without authorization.
+
+### ⚠️ Important Notice
+
+This unauthorized repository:
+
+- ❌ **Is not affiliated with or endorsed by Wontonee DigitalCraft LLP**
+- ❌ **Contains infringing copies of our proprietary code**
+- ❌ **Is currently under formal DMCA review and takedown process with GitHub**
+
+### ✅ Official & Safe Source
+
+If you are using, testing, or integrating this extension, please ensure you are downloading it **only from our official repository**:
+
+👉 **https://github.com/wontonee/razorpay-payment-gateway-bagisto-laravel**
+
+We take copyright and code integrity seriously to protect our users, clients, and the Laravel community. Unauthorized forks, copies, or redistributions of this software violate our license terms and may be subject to legal action.
+
+**For verification, partnerships, or licensing inquiries, please contact:**
+- 📧 **Email**: dev@wontonee.com
+- 🌐 **Website**: https://wontonee.com
+
+Thank you for your understanding and continued support.
+
+**— Team Wontonee DigitalCraft LLP**
+
+---
+
 ## Licensing Information
 
 You must take a license from the website [https://myapps.wontonee.com/login](https://myapps.wontonee.com/login), either trial or paid.
