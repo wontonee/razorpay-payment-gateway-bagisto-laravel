@@ -30,7 +30,7 @@ class Razorpay extends Payment
             $this->setCart();
         }
 
-        return $this->getConfigData('active') && $this->cart?->haveStockableItems();
+        return $this->getConfigData('active');
     }
 
     /**
