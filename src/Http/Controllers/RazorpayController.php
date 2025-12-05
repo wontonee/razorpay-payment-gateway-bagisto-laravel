@@ -101,6 +101,7 @@ class RazorpayController extends Controller
             'key' => core()->getConfigData('sales.payment_methods.razorpay.key_id'),
             'secret' => core()->getConfigData('sales.payment_methods.razorpay.secret'),
             'license' => core()->getConfigData('sales.payment_methods.razorpay.license_keyid'),
+            'domain' => core()->getConfigData('sales.payment_methods.razorpay.domain'),
             'product_id' => 'RazorPayBagisto',
             'receipt' => "Receipt no. " . $cart->id,
             'amount' => $roundedAmount * 100,

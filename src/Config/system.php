@@ -47,6 +47,15 @@ return [
                 'channel_based' => false,
                 'locale_based'  => false,
             ],
+            [
+                'name'          => 'domain',
+                'title'         => 'Domain',
+                'type'          => 'text',
+                'validation'    => 'required',
+                'channel_based' => false,
+                'locale_based'  => false,
+                'info'          => 'Enter your domain without http/https (e.g., example.com, mystore.net)',
+            ],
 
             [
                 'name'          => 'key_id',
